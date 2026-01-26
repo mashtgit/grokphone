@@ -176,7 +176,7 @@ const voxNum = 'YOUR_RENTED_PHONE_NUMBER';
 Once your environment and credentials are set up, run the local CI deployment script:
 
 ```bash
-node project_script.js
+node deploy.js
 ```
 
 This script will:
@@ -211,8 +211,8 @@ grok-voice-agent-example/
 │   ├── application.config.json           # Voximplant Application configuration
 │   └── rules.config.json                 # Routing rules configuration
 │
-├── project_script.js                     # Local CI deployment script for Voximplant
-├── outbound_call_script.js               # Script using Voximplant API Client to start outbound calls
+├── deploy.js                             # Local CI deployment script for Voximplant
+├── outbound.js                           # Script using Voximplant API Client to start outbound calls
 ├── package.json
 ├── .env
 ├── .env.example
@@ -230,14 +230,14 @@ grok-voice-agent-example/
 - `modules/grok_integration.voxengine.js` — manages the WebSocket communication with Grok, audio routing, and events
 - `application/application.config.json` — defines your Voximplant Application name
 - `application/rules.config.json` — contains inbound and outbound routing rules
-- `project_script.js` — local CI script to automate deployment of Application, Rules, and Scenarios
-- `outbound_call_script.js` — local script using Voximplant API Client to automate outbound call initiation
+- `deploy.js` — local CI script to automate deployment of Application, Rules, and Scenarios
+- `outbound.js` — local script using Voximplant API Client to automate outbound call initiation
 - `.env` — environment variables such as Voximplant credentials and app name
 
 
 ## Testing
 
-This section describes how to test **incoming** and **outgoing** calls after successfully deploying the application in Voximplant using `project_script.js`.
+This section describes how to test **incoming** and **outgoing** calls after successfully deploying the application in Voximplant using `deploy.js`.
 
 Before testing, make sure that:
 
@@ -279,7 +279,7 @@ Before testing, make sure that:
 
 2. **Use the outbound helper script (recommended):**
 ```bash
-node outbound_call_script.js
+node outbound.js
 ```
 
 **Alternative: call the API directly**
