@@ -277,9 +277,20 @@ Before testing, make sure that:
     - Ensure your **rented phone number** is linked to your application.
     - Make sure the **`outboundCalls` rule** is active.
 
-2. **Run the outbound script:**
+2. **Use the outbound helper script (recommended):**
 ```bash
 node outbound_call_script.js
+```
+
+**Alternative: call the API directly**
+
+```bash
+curl -X POST "https://api.voximplant.com/platform_api/StartScenarios" \
+  -d "account_name=YOUR_ACCOUNT_NAME" \
+  -d "application_id=YOUR_APP_ID" \
+  -d "api_key=YOUR_API_KEY" \
+  -d "rule_id=YOUR_OUTBOUND_RULE_ID" \
+  -d 'script_custom_data={"clientNum":"+12345678901"}'
 ```
 
 3. **Expected behavior:**
@@ -304,6 +315,17 @@ For both inbound and outbound calls:
 - Ensure the Grok WebSocket connection is properly closed after the call ends.
 
 > 💡 Tip: Always test with both inbound and outbound calls to verify **end-to-end voice interaction** with the Grok Voice Agent.
+
+## Next Steps
+
+Once this sample is running, you can explore broader Voximplant capabilities such as:
+
+- **Voice AI orchestration** — a serverless runtime for speech-to-speech, speech-to-text, and text-to-speech pipelines with code-driven control. Mix and match speech/LLM components, use wideband audio for higher fidelity, and scale globally on a distributed network.
+- **SIP connectivity** — deep SIP support with trunking and registration interoperability for carriers, PBXs, and SBCs, so your agent can plug into existing telecom environments.
+- **WhatsApp calling** — support for the WhatsApp Business Calling API to place and receive calls inside WhatsApp for multi-channel voice experiences.
+- **SDKs** — run the same agent across phone numbers, SIP, native mobile apps, WebRTC, and WhatsApp without changing your call logic.
+
+Learn more about Voximpant and Voice AI on: [voximplant.ai](https://voximplant.ai)
 
 ## Troubleshooting
 
