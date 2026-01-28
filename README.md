@@ -176,7 +176,7 @@ const voxNum = 'YOUR_RENTED_PHONE_NUMBER';
 Once your environment and credentials are set up, run the local CI deployment script:
 
 ```bash
-node project_script.js
+node deploy.js
 ```
 
 This script will:
@@ -211,8 +211,8 @@ grok-voice-agent-example/
 │   ├── application.config.json           # Voximplant Application configuration
 │   └── rules.config.json                 # Routing rules configuration
 │
-├── project_script.js                     # Local CI deployment script for Voximplant
-├── outbound_call_script.js               # Script using Voximplant API Client to start outbound calls
+├── deploy.js                             # Local CI deployment script for Voximplant
+├── outbound.js                           # Script using Voximplant API Client to start outbound calls
 ├── package.json
 ├── .env
 ├── .env.example
@@ -230,14 +230,14 @@ grok-voice-agent-example/
 - `modules/grok_integration.voxengine.js` — manages the WebSocket communication with Grok, audio routing, and events
 - `application/application.config.json` — defines your Voximplant Application name
 - `application/rules.config.json` — contains inbound and outbound routing rules
-- `project_script.js` — local CI script to automate deployment of Application, Rules, and Scenarios
-- `outbound_call_script.js` — local script using Voximplant API Client to automate outbound call initiation
+- `deploy.js` — local CI script to automate deployment of Application, Rules, and Scenarios
+- `outbound.js` — local script using Voximplant API Client to automate outbound call initiation
 - `.env` — environment variables such as Voximplant credentials and app name
 
 
 ## Testing
 
-This section describes how to test **incoming** and **outgoing** calls after successfully deploying the application in Voximplant using `project_script.js`.
+This section describes how to test **incoming** and **outgoing** calls after successfully deploying the application in Voximplant using `deploy.js`.
 
 Before testing, make sure that:
 
@@ -277,9 +277,20 @@ Before testing, make sure that:
     - Ensure your **rented phone number** is linked to your application.
     - Make sure the **`outboundCalls` rule** is active.
 
-2. **Run the outbound script:**
+2. **Use the outbound helper script (recommended):**
 ```bash
-node outbound_call_script.js
+node outbound.js
+```
+
+**Alternative: call the API directly**
+
+```bash
+curl -X POST "https://api.voximplant.com/platform_api/StartScenarios" \
+  -d "account_name=YOUR_ACCOUNT_NAME" \
+  -d "application_id=YOUR_APP_ID" \
+  -d "api_key=YOUR_API_KEY" \
+  -d "rule_id=YOUR_OUTBOUND_RULE_ID" \
+  -d 'script_custom_data={"clientNum":"+12345678901"}'
 ```
 
 3. **Expected behavior:**
@@ -304,6 +315,17 @@ For both inbound and outbound calls:
 - Ensure the Grok WebSocket connection is properly closed after the call ends.
 
 > 💡 Tip: Always test with both inbound and outbound calls to verify **end-to-end voice interaction** with the Grok Voice Agent.
+
+## Next Steps
+
+Once this sample is running, you can explore broader Voximplant capabilities such as:
+
+- **Voice AI orchestration** — a serverless runtime for speech-to-speech, speech-to-text, and text-to-speech pipelines with code-driven control. Mix and match speech/LLM components, use wideband audio for higher fidelity, and scale globally on a distributed network.
+- **SIP connectivity** — deep SIP support with trunking and registration interoperability for carriers, PBXs, and SBCs, so your agent can plug into existing telecom environments.
+- **WhatsApp calling** — support for the WhatsApp Business Calling API to place and receive calls inside WhatsApp for multi-channel voice experiences.
+- **SDKs** — run the same agent across phone numbers, SIP, native mobile apps, WebRTC, and WhatsApp without changing your call logic.
+
+Learn more about Voximpant and Voice AI on: [voximplant.ai](https://voximplant.ai)
 
 ## Troubleshooting
 
