@@ -1,4 +1,5 @@
 const voxNum = 'YOUR_RENTED_PHONE_NUMBER';
+const GROK_MODEL = 'grok-voice-think-fast-1.0';
 const SYSTEM_INSTRUCTIONS = `
 You are a useful virtual assistant.
 Your name is Voxy — please introduce yourself at the start of the conversation.

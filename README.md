@@ -73,7 +73,7 @@ Before you begin, ensure you have:
 #### Clone the repository
 
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/voximplant/grok-voice-agent-example.git
 cd grok-voice-agent-example
 ```
 
@@ -100,7 +100,7 @@ VOX_CI_ROOT_PATH=./voxengine_ci_source_files              # Local directory for 
 VOX_ACCOUNT_NAME=your_account_name                        # e.g. "mycompany"
 VOX_NEW_APP_NAME=your_new_app_name                        # e.g. "grok-voice-agent"
 VOX_PHONE_NUMBER=your_rented_phone_number                 # Rented phone number on Voximplant Platform
-SCRIPT_CUSTOM_DATA={"clientNum":"+12345678901"}           # Set the phone number you want to make ou
+SCRIPT_CUSTOM_DATA={"clientNum":"+12345678901"}           # Set the phone number you want to make outbound call to
 ```
 
 Notes
@@ -147,6 +147,7 @@ const X_API_KEY = 'YOUR_X_API_KEY';
 
 ```javascript
 const voxNum = 'YOUR_RENTED_PHONE_NUMBER';
+const GROK_MODEL = 'grok-voice-think-fast-1.0';
 const SYSTEM_INSTRUCTIONS = `
 Your system instructions go here...
 `;
@@ -155,6 +156,7 @@ Your system instructions go here...
 Notes
 
 - `X_API_KEY` — your API key from Grok (xAI).
+- `GROK_MODEL` — the Grok Voice Agent model to use. `grok-voice-think-fast-1.0` is the recommended model for new deployments. `grok-voice-fast-1.0` is the legacy default in the xAI API.
 - `SYSTEM_INSTRUCTIONS` — the system prompt or instructions you want the LLM to follow during the call.
 - `voxNum` — your rented Voximplant number used as the outbound caller ID.
 - These values are used in both **inbound** and **outbound** scenarios.
@@ -325,7 +327,7 @@ Once this sample is running, you can explore broader Voximplant capabilities suc
 - **WhatsApp calling** — support for the WhatsApp Business Calling API to place and receive calls inside WhatsApp for multi-channel voice experiences.
 - **SDKs** — run the same agent across phone numbers, SIP, native mobile apps, WebRTC, and WhatsApp without changing your call logic.
 
-Learn more about Voximpant and Voice AI on: [voximplant.ai](https://voximplant.ai)
+Learn more about Voximplant and Voice AI on: [voximplant.ai](https://voximplant.ai)
 
 ## Troubleshooting
 
@@ -353,7 +355,7 @@ Contributions are welcome! Please follow these steps:
 ```bash
 git checkout -b feature/amazing-feature
 ```
-3. Comming your changes:
+3. Commit your changes:
 ```bash
 git commit -m 'Add amazing feature'
 ```
