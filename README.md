@@ -147,6 +147,7 @@ const X_API_KEY = 'YOUR_X_API_KEY';
 
 ```javascript
 const voxNum = 'YOUR_RENTED_PHONE_NUMBER';
+// Temporary explicit model until xAI changes the Voice Agent API default on May 31, 2026.
 const GROK_MODEL = 'grok-voice-think-fast-1.0';
 const SYSTEM_INSTRUCTIONS = `
 Your system instructions go here...
@@ -156,7 +157,7 @@ Your system instructions go here...
 Notes
 
 - `X_API_KEY` — your API key from Grok (xAI).
-- `GROK_MODEL` — the Grok Voice Agent model to use. `grok-voice-think-fast-1.0` is the recommended model for new deployments. `grok-voice-fast-1.0` is the legacy default in the xAI API.
+- `GROK_MODEL` — the Grok Voice Agent model to use. This sample explicitly uses `grok-voice-think-fast-1.0` until xAI changes the Voice Agent API default on May 31, 2026. After that date, you can remove the explicit model selection and use the xAI default.
 - `SYSTEM_INSTRUCTIONS` — the system prompt or instructions you want the LLM to follow during the call.
 - `voxNum` — your rented Voximplant number used as the outbound caller ID.
 - These values are used in both **inbound** and **outbound** scenarios.
