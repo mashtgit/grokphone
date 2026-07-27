@@ -1,4 +1,8 @@
 node_modules
 .env
 /modules/credentials.voxengine.js
+/modules/agent_config.voxengine.js
 voxengine_ci_source_files
+voximplant-credentials.json
+*_private.json
+graphify-out/cost.json

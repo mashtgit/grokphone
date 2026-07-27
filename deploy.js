@@ -13,6 +13,9 @@ const VOX_CI_ROOT_PATH = cleanEnvValue(process.env.VOX_CI_ROOT_PATH);
 const VOX_ACCOUNT_NAME = cleanEnvValue(process.env.VOX_ACCOUNT_NAME);
 const VOX_NEW_APP_NAME = cleanEnvValue(process.env.VOX_NEW_APP_NAME);
 const VOX_PHONE_NUMBER = cleanEnvValue(process.env.VOX_PHONE_NUMBER);
+const X_API_KEY = cleanEnvValue(process.env.X_API_KEY);
+const GROK_MODEL = cleanEnvValue(process.env.GROK_MODEL) || 'grok-voice-think-fast-1.0';
+const SYSTEM_INSTRUCTIONS = cleanEnvValue(process.env.SYSTEM_INSTRUCTIONS);
 
 const setCleanEnv = (key, value) => {
     if (typeof value === 'undefined') {
@@ -31,8 +34,10 @@ setCleanEnv('VOX_PHONE_NUMBER', VOX_PHONE_NUMBER);
 // ---------------------------
 // Check required environment variables
 // ---------------------------
-if (!VOX_CI_CREDENTIALS || !VOX_CI_ROOT_PATH) {
-    console.error('Please set VOX_CI_CREDENTIALS and VOX_CI_ROOT_PATH in your .env file');
+const required = { VOX_CI_CREDENTIALS, VOX_CI_ROOT_PATH, VOX_ACCOUNT_NAME, VOX_NEW_APP_NAME, X_API_KEY };
+const missing = Object.entries(required).filter(([, v]) => !v);
+if (missing.length) {
+    console.error(`Missing required env vars: ${missing.map(([k]) => k).join(', ')}`);
     process.exit(1);
 }
 
@@ -40,10 +45,10 @@ if (!VOX_CI_CREDENTIALS || !VOX_CI_ROOT_PATH) {
 // Define project paths
 // ---------------------------
 const projectRoot = __dirname;
-const ciRootDir = VOX_CI_ROOT_PATH; // Root folder for Voximplant CI source files
-const sourceApplicationDir = path.join(projectRoot, 'application'); // Folder with app configs
-const sourceScenariosDir = path.join(projectRoot, 'scenarios'); // Folder with scenario scripts
-const sourceVoiceAIDir = path.join(projectRoot, 'modules'); // Folder with ai script
+const ciRootDir = VOX_CI_ROOT_PATH;
+const sourceApplicationDir = path.join(projectRoot, 'application');
+const sourceScenariosDir = path.join(projectRoot, 'scenarios');
+const sourceVoiceAIDir = path.join(projectRoot, 'modules');
 
 // ---------------------------
 // Create CI root folder if it doesn't exist
@@ -78,22 +83,23 @@ try {
 }
 
 // ---------------------------
-// Copy application config files
+// Copy application config files (with template substitution)
 // ---------------------------
 const ciApplicationsDir = path.join(ciRootDir, 'applications');
-const ciAppName = VOX_NEW_APP_NAME; // Application name
-const accountName = VOX_ACCOUNT_NAME;   // Account name
+const ciAppName = VOX_NEW_APP_NAME;
+const accountName = VOX_ACCOUNT_NAME;
 const ciApplicationDir = path.join(ciApplicationsDir, `${ciAppName}.${accountName}.voximplant.com`);
 
-// Create application folder if it doesn't exist
 if (!fs.existsSync(ciApplicationDir)) fs.mkdirSync(ciApplicationDir, { recursive: true });
 
-// Copy configs
 ['application.config.json', 'rules.config.json'].forEach(file => {
     const src = path.join(sourceApplicationDir, file);
     const dest = path.join(ciApplicationDir, file);
-    fs.copyFileSync(src, dest);
-    console.log(`Config copied to CI folder: ${file}`);
+    let content = fs.readFileSync(src, 'utf-8');
+    // Replace {{VAR}} placeholders with env values
+    content = content.replace(/\{\{(\w+)\}\}/g, (_, key) => process.env[key] || `{{${key}}}`);
+    fs.writeFileSync(dest, content);
+    console.log(`Config written to CI folder: ${file}`);
 });
 
 // ---------------------------
@@ -110,13 +116,38 @@ fs.readdirSync(sourceScenariosDir).forEach(file => {
 });
 
 // ---------------------------
-// Copy modules scripts
+// Generate config files from .env (credentials + agent_config)
 // ---------------------------
+
+// credentials.voxengine.js
+const credentialsContent = `const X_API_KEY = '${X_API_KEY.replace(/'/g, "\\'")}';`;
+fs.writeFileSync(path.join(ciScenariosDir, 'credentials.voxengine.js'), credentialsContent);
+console.log(`Generated: credentials.voxengine.js (from .env X_API_KEY)`);
+
+// agent_config.voxengine.js
+const voxNum = VOX_PHONE_NUMBER || 'YOUR_RENTED_PHONE_NUMBER';
+const agentConfigContent = [
+    `const voxNum = '${voxNum.replace(/'/g, "\\'")}';`,
+    `const GROK_MODEL = '${GROK_MODEL.replace(/'/g, "\\'")}';`,
+    'const SYSTEM_INSTRUCTIONS = `' + (SYSTEM_INSTRUCTIONS || '') + '`;',
+].join('\n');
+// Actually let me use template literal properly
+const safeInstructions = (SYSTEM_INSTRUCTIONS || '').replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+const agentConfigContentFinal = `const voxNum = '${voxNum.replace(/'/g, "\\'")}';
+// Temporary explicit model until xAI changes the Voice Agent API default on May 31, 2026.
+const GROK_MODEL = '${GROK_MODEL.replace(/'/g, "\\'")}';
+const SYSTEM_INSTRUCTIONS = \`${safeInstructions}\`;`;
+
+fs.writeFileSync(path.join(ciScenariosDir, 'agent_config.voxengine.js'), agentConfigContentFinal);
+console.log(`Generated: agent_config.voxengine.js (from .env)`);
+
+// Copy remaining modules (grok_integration.voxengine.js) — skip the two we just generated
 fs.readdirSync(sourceVoiceAIDir).forEach(file => {
+    if (file === 'credentials.voxengine.js' || file === 'agent_config.voxengine.js') return;
     const src = path.join(sourceVoiceAIDir, file);
     const dest = path.join(ciScenariosDir, file);
     fs.copyFileSync(src, dest);
-    console.log(`Scenario copied: ${file}`);
+    console.log(`Module copied: ${file}`);
 });
 
 // ---------------------------

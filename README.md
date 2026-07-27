@@ -1,4 +1,4 @@
-# Grok Voice Agent Example with Voximplant
+# Grok Voice Agent with Voximplant
 
 A ready-to-run example demonstrating inbound and outbound calls with Grok Voice Agent integrated via Voximplant CI.
 
@@ -12,19 +12,18 @@ This project showcases **fully automated creation of Voximplant Application, Sce
 - [Prerequisites](#prerequisites)
 - [Getting Started](#getting-started)
     - [Create a Voximplant Account](#create-a-voximplant-account)
-    - [Purchase a Phone Number](#purchase-a-phone-number)
+    - [Get a Phone Number](#get-a-phone-number)
     - [Set Up Your Environment](#set-up-your-environment)
+- [Configuration](#configuration)
+    - [Environment Variables (.env)](#environment-variables-env)
+    - [Service Account](#service-account)
 - [Project Structure](#project-structure)
-    - [Inbound Call Handling](#inbound-call-handling)
-    - [Outbound Call Handling](#outbound-call-handling)
-    - [Grok Voice Agent Integration](#grok-voice-agent-integration)
 - [Deployment](#deployment)
 - [Testing](#testing)
+    - [Testing Inbound Calls (Sandbox)](#testing-inbound-calls-sandbox)
+    - [Testing Outbound Calls](#testing-outbound-calls)
 - [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
 - [License](#license)
-- [Additional Resources](#additional-resources)
-- [Support](#support)
 
 ---
 
@@ -32,12 +31,12 @@ This project showcases **fully automated creation of Voximplant Application, Sce
 
 This voice agent example demonstrates:
 
-- 📞 Handling inbound phone calls
-- 📱 Making outbound phone calls
-- 🤖 Real-time conversation with Grok Voice Agent API
-- 🔄 Automated deployment using Voximplant CI/CD
+- Handling inbound phone calls via a Voximplant virtual number
+- Making outbound phone calls to a real number
+- Real-time conversation with Grok Voice Agent API
+- Automated deployment using Voximplant CI/CD
 
-It is designed to work **out-of-the-box** with minimal setup.
+All sensitive configuration is stored in `.env` — no hardcoded secrets in source files.
 
 ---
 
@@ -45,10 +44,10 @@ It is designed to work **out-of-the-box** with minimal setup.
 
 Before you begin, ensure you have:
 
-- A valid email address for Voximplant account registration
-- Basic knowledge of JavaScript
-- Grok API credentials (from [x.ai](https://x.ai))
-- Git and Node.js installed
+- A Voximplant account ([sign up](https://manage.voximplant.com/auth/sign_up))
+- A Voximplant service account JSON key ([guide](https://voximplant.com/docs/guides/management-api/authorization#service-accounts))
+- Grok API key with Voice Agent access (from [x.ai](https://x.ai))
+- Node.js 18+ installed
 
 ---
 
@@ -59,124 +58,129 @@ Before you begin, ensure you have:
 1. Go to [Voximplant Sign Up](https://manage.voximplant.com/auth/sign_up)
 2. Complete registration: Email, Password, Account Name
 3. Verify your email and finish the setup wizard
+4. Create a service account in **Service Accounts** and download the JSON key
 
-### Purchase a Phone Number
+### Get a Phone Number
 
-1. Log in to Voximplant control panel
-2. Navigate: **Numbers → Buy Number**
-3. Select a country and choose a number
-4. Complete the purchase
-5. Attach the number to your Application (to be created in the next steps)
+You need a phone number linked to your application. Two options:
+
+**Option A: Rent a real number**
+1. Go to **Numbers → Buy Number** in the Voximplant control panel
+2. Select a country and purchase a number
+3. It will be bound automatically during deployment
+
+**Option B: Sandbox number (free, for testing)**
+Voximplant provides a sandbox number for testing. To use it:
+1. Skip buying a number
+2. After deployment, call one of Voximplant's test numbers and enter your app's virtual number as an extension (see [Testing](#testing-inbound-calls-sandbox))
 
 ### Set Up Your Environment
 
-#### Clone the repository
+Clone the repository and install dependencies:
 
 ```bash
-git clone https://github.com/voximplant/grok-voice-agent-example.git
-cd grok-voice-agent-example
-```
-
-#### Install dependencies
-
-```bash
+git clone <your-repo-url>
+cd grok-phone-agent
 npm install
 ```
 
-### Add Voximplant CI Credentials
+---
 
-Copy the example file, then update it with your Voximplant CI credentials and application settings:
+## Configuration
+
+All configuration is managed through `.env`. No need to edit JavaScript files.
+
+### Environment Variables (.env)
+
+Copy the example file and fill in your values:
 
 ```bash
 cp .env.example .env
 ```
 
-Then edit `.env`:
+Your `.env` should look like this:
 
 ```env
 # Voximplant CI Credentials
-VOX_CI_CREDENTIALS=/path/to/voximplant-credentials.json   # Path to Voximplant service account JSON
-VOX_CI_ROOT_PATH=./voxengine_ci_source_files              # Local directory for CI source files
-VOX_ACCOUNT_NAME=your_account_name                        # e.g. "mycompany"
-VOX_NEW_APP_NAME=your_new_app_name                        # e.g. "grok-voice-agent"
-VOX_PHONE_NUMBER=your_rented_phone_number                 # Rented phone number on Voximplant Platform
-SCRIPT_CUSTOM_DATA={"clientNum":"+12345678901"}           # Set the phone number you want to make outbound call to
+VOX_CI_CREDENTIALS=./voximplant-credentials.json
+VOX_CI_ROOT_PATH=./voxengine_ci_source_files
+VOX_ACCOUNT_NAME=your_account_name
+VOX_NEW_APP_NAME=your-app-name
+VOX_PHONE_NUMBER=your_virtual_number
+SCRIPT_CUSTOM_DATA={"clientNum":"+12345678901"}
+
+# xAI Grok Voice Agent
+X_API_KEY=your_xai_api_key_here
+GROK_MODEL=grok-voice-latest
+SYSTEM_INSTRUCTIONS="You are a useful virtual assistant..."
 ```
 
-Notes
+| Variable | Description |
+|---|---|
+| `VOX_CI_CREDENTIALS` | Path to your Voximplant service account JSON file |
+| `VOX_CI_ROOT_PATH` | Local CI working directory (gitignored) |
+| `VOX_ACCOUNT_NAME` | Your Voximplant account name |
+| `VOX_NEW_APP_NAME` | Name for the new Voximplant Application |
+| `VOX_PHONE_NUMBER` | Your Voximplant virtual number (used as caller ID for outbound) |
+| `SCRIPT_CUSTOM_DATA` | JSON with data passed to the outbound scenario (e.g., destination number) |
+| `X_API_KEY` | Your xAI API key (must have Voice Agent API access) |
+| `GROK_MODEL` | Grok voice model: `grok-voice-latest` (recommended) or a pinned version |
+| `SYSTEM_INSTRUCTIONS` | System prompt for the Grok voice agent |
 
-- `VOX_CI_CREDENTIALS` — path to the JSON file you downloaded from Voximplant containing your API key and account information.
-- `VOX_CI_ROOT_PATH` — local folder where the CI source files will be prepared before deployment.
-- `VOX_ACCOUNT_NAME` — your Voximplant account name.
-- `VOX_NEW_APP_NAME` — the name you want to give to the new Voximplant Application.
-- `VOX_PHONE_NUMBER` — your rented Voximplant number used as the outbound caller ID
-- `SCRIPT_CUSTOM_DATA` — JSON string containing data to pass to the scenario (e.g., client phone number).
+> The `application.config.json` uses `{{VARS}}` placeholders that are automatically substituted from `.env` during deployment.
 
-> 💡 Tip: VOX_CI_CREDENTIALS should point to the JSON file you downloaded from Voximplant with your API key and account information (read more [how to get it](https://voximplant.com/docs/guides/management-api/authorization#service-accounts))
+### Service Account
 
-> 💡 Tip: Make sure the `.env` file is **not committed to version control**, as it contains sensitive credentials. .env is part of the project .gitignore by default.
+Place your Voximplant service account JSON file in the project root (e.g., `voximplant-credentials.json`).
 
-### Configure Application Name and Account
+> **Security:** This file contains your private key. It is listed in `.gitignore` and must never be committed.
 
-Update the `application.config.json` file in the `application/` folder:
+---
 
-```json
-{
-  "applicationName": "YOUR_NEW_APP_NAME.YOUR_ACCOUNT_NAME.voximplant.com"
-}
+## Project Structure
+
 ```
-- **`YOUR_NEW_APP_NAME`** — the name you want to give to the new Voximplant Application
-- **`YOUR_ACCOUNT_NAME`** — your Voximplant account name (as used in your credentials)
-
-> 💡 **Tip:** This name must match the account name in your `.env` file (`VOX_ACCOUNT_NAME`) and your desired application name (`VOX_NEW_APP_NAME`). Otherwise, the deployment script will fail.
-
-### Configure Voice Agent
-
-The integration with Grok requires an **API key** and **system instructions** for the LLM. These settings are defined in two modules:
-
-- `modules/credentials.voxengine.js` — API key (gitignored)
-- `modules/agent_config.voxengine.js` — system instructions and caller ID
-
-#### Example configuration (credentials):
-
-```javascript
-const X_API_KEY = 'YOUR_X_API_KEY';
-```
-
-#### Example configuration (agent config):
-
-```javascript
-const voxNum = 'YOUR_RENTED_PHONE_NUMBER';
-// Temporary explicit model until xAI changes the Voice Agent API default on May 31, 2026.
-const GROK_MODEL = 'grok-voice-think-fast-1.0';
-const SYSTEM_INSTRUCTIONS = `
-Your system instructions go here...
-`;
+grok-phone-agent/
+├── scenarios/
+│   ├── inbound_handler.voxengine.js      # Incoming call handler
+│   └── outbound_handler.voxengine.js     # Outgoing call handler
+│
+├── modules/
+│   ├── credentials.voxengine.js          # Template — generated from .env at deploy
+│   ├── agent_config.voxengine.js         # Template — generated from .env at deploy
+│   └── grok_integration.voxengine.js     # Grok Voice Agent API integration (WebSocket, events)
+│
+├── application/
+│   ├── application.config.json           # Template with {{VAR}} placeholders
+│   └── rules.config.json                 # Routing rules (inbound + outbound)
+│
+├── deploy.js                             # Deploy: generates configs from .env, uploads via CI
+├── outbound.js                           # Script to trigger an outbound call via Management API
+├── .env                                  # All configuration and secrets (gitignored)
+├── .env.example                          # Example config template
+├── .gitignore
+├── voxengine_ci_source_files/            # Generated by CI (gitignored)
+└── README.md
 ```
 
-Notes
+### Key Files
 
-- `X_API_KEY` — your API key from Grok (xAI).
-- `GROK_MODEL` — the Grok Voice Agent model to use. This sample explicitly uses `grok-voice-think-fast-1.0` until xAI changes the Voice Agent API default on May 31, 2026. After that date, you can remove the explicit model selection and use the xAI default.
-- `SYSTEM_INSTRUCTIONS` — the system prompt or instructions you want the LLM to follow during the call.
-- `voxNum` — your rented Voximplant number used as the outbound caller ID.
-- These values are used in both **inbound** and **outbound** scenarios.
+| File | Purpose |
+|---|---|
+| `scenarios/inbound_handler.voxengine.js` | Handles incoming calls and connects to Grok |
+| `scenarios/outbound_handler.voxengine.js` | Makes outbound calls and attaches Grok after connection |
+| `modules/grok_integration.voxengine.js` | WebSocket communication with Grok, audio routing, tool calls |
+| `application/rules.config.json` | Defines `inboundCalls` (pattern `.*`) and `outboundCalls` (pattern `outbound`) rules |
+| `deploy.js` | Reads `.env`, generates config files, runs Voxengine CI to upload everything |
+| `outbound.js` | Starts an outbound call via the Voximplant Management API |
 
-> 💡 Tip: Keep your API key private. Do not commit real keys to a public repository. `modules/credentials.voxengine.js` is listed in `.gitignore`.
+**How config generation works:** `deploy.js` reads `.env`, generates `credentials.voxengine.js` and `agent_config.voxengine.js` with your actual values, then uploads them together with the static scenarios.
 
-### Set Voximplant Phone Number
+---
 
-The project uses a rented Voximplant number for both **incoming** and **outgoing** calls. Set the caller ID in `modules/agent_config.voxengine.js`:
+## Deployment
 
-```javascript
-const voxNum = 'YOUR_RENTED_PHONE_NUMBER';
-```
-
-> 💡 Tip: Make sure the same number is properly linked in Voximplant for both inbound and outbound rules to avoid call errors.
-
-### Run the Local CI Deployment
-
-Once your environment and credentials are set up, run the local CI deployment script:
+Once your `.env` is configured and the service account JSON is in place:
 
 ```bash
 node deploy.js
@@ -184,189 +188,103 @@ node deploy.js
 
 This script will:
 
-- **Verify your environment variables** (`.env` file) to ensure all required credentials and paths are set.
-- **Initialize the Voximplant CI project**, creating the necessary structure for deployment.
-- **Copy all scenarios, modules, and configuration files** into the CI project folder.
-- **Upload the Application, Rules, and Scenarios** to your Voximplant account.
-- **Bind rented phone number** to the uploaded Application
+1. **Verify** all required environment variables are set
+2. **Initialize** Voximplant CI project structure
+3. **Generate** `credentials.voxengine.js` and `agent_config.voxengine.js` from `.env`
+4. **Substitute** `{{VARS}}` in `application.config.json` from `.env`
+5. **Upload** the Application, Rules, and Scenarios to your Voximplant account
+6. **Bind** the phone number to the uploaded application
 
-After running the script:
-- Ensure the number is associated with two created rules.
-   
-Now your application will be **fully deployed and ready for testing**.
+> If the application already exists, re-running `deploy.js` updates scenarios and rules in place.
 
-> 💡 Tip: If you encounter errors, check that your `.env` variables are correct and that your Voximplant account has **sufficient permissions and balance**.
-
-## Project Structure
-
-```
-grok-voice-agent-example/
-├── scenarios/
-│   ├── inbound_handler.voxengine.js      # Incoming call handler
-│   └── outbound_handler.voxengine.js     # Outgoing call handler
-│
-├── modules/
-│   ├── credentials.voxengine.js          # API key (gitignored)
-│   ├── agent_config.voxengine.js         # System instructions + caller ID
-│   └── grok_integration.voxengine.js     # Grok Voice Agent API integration
-│
-├── application/
-│   ├── application.config.json           # Voximplant Application configuration
-│   └── rules.config.json                 # Routing rules configuration
-│
-├── deploy.js                             # Local CI deployment script for Voximplant
-├── outbound.js                           # Script using Voximplant API Client to start outbound calls
-├── package.json
-├── .env
-├── .env.example
-├── .gitignore
-├── voxengine_ci_source_files/            # Generated by CI (gitignored)
-└── README.md
-```
-
-### Description of Key Files
-
-- `scenarios/inbound_handler.voxengine.js` — handles all **incoming calls** and connects them to Grok Voice Agent
-- `scenarios/outbound_handler.voxengine.js` — initiates **outgoing calls** and attaches Grok Voice Agent after connecting
-- `modules/credentials.voxengine.js` — stores Grok API key (gitignored)
-- `modules/agent_config.voxengine.js` — stores caller ID and LLM system instructions
-- `modules/grok_integration.voxengine.js` — manages the WebSocket communication with Grok, audio routing, and events
-- `application/application.config.json` — defines your Voximplant Application name
-- `application/rules.config.json` — contains inbound and outbound routing rules
-- `deploy.js` — local CI script to automate deployment of Application, Rules, and Scenarios
-- `outbound.js` — local script using Voximplant API Client to automate outbound call initiation
-- `.env` — environment variables such as Voximplant credentials and app name
-
+---
 
 ## Testing
 
-This section describes how to test **incoming** and **outgoing** calls after successfully deploying the application in Voximplant using `deploy.js`.
+### Testing Inbound Calls (Sandbox)
 
-Before testing, make sure that:
+If you have a sandbox (virtual) number instead of a real rented number:
 
-- The application is successfully uploaded to Voximplant.
-- A phone number is rented and linked to the application.
-- The scenarios and rules are active.
+1. In the Voximplant control panel, verify your sandbox number is active and linked to the application
+2. Call **one of Voximplant's test numbers**:
 
----
+   ```
+   +74999384362  (Russia)
+   +19292240694  (USA)
+   +48223970842  (Poland)
+   +97243720980  (Israel)
+   +420228880669 (Czech)
+   +14388002812  (Canada)
+   +61283104145  (Australia)
+   +442038083060 (UK)
+   ```
 
-### Testing Incoming Calls (Inbound)
+3. After the automated greeting, **enter your virtual number** (e.g. `699113361`) as an extension using the keypad (DTMF)
+4. The call will be routed to your application's `inbound_handler` scenario
 
-**Steps:**
+**Expected behavior:**
+- The call is answered by the VoxEngine scenario
+- A Grok Voice Agent is created and connected
+- Audio is transmitted in real time
+- The dialogue continues until hangup or the `hangup_call` function is triggered
 
-1. In the Voximplant control panel, verify that:
-    - The rented phone number is linked to your Application.
-    - The rule `inboundCalls` is active.
+**Check results:**
+- View **Call History** in the Voximplant panel
+- Review scenario logs via `Logger.write` messages
 
-2. Make a regular phone call to the rented Voximplant number.
+### Testing Outbound Calls
 
-3. **Expected behavior:**
-    - The call will be handled by the `inbound_handler` scenario.
-    - A Grok Voice Agent will be created.
-    - Audio will be transmitted in real time between the caller and Grok.
-    - The dialogue continues until the call ends or the LLM function `hangup_call` is triggered.
+**Prerequisites:**
+- A rented phone number linked to the application
+- Sufficient Voximplant account balance for outbound calls
+- The `outboundCalls` rule is active
 
-4. **Check logs and results:**
-    - View **Call History** in the Voximplant panel.
-    - Check scenario logs via `Logger.write` messages.
+**Using the helper script:**
 
----
-
-### Testing Outgoing Calls (Outbound)
-
-**Steps:**
-
-1. **Verify setup in Voximplant control panel:**
-    - Ensure your **rented phone number** is linked to your application.
-    - Make sure the **`outboundCalls` rule** is active.
-
-2. **Use the outbound helper script (recommended):**
 ```bash
 node outbound.js
 ```
 
-**Alternative: call the API directly**
+This script:
+- Fetches the `outboundCalls` rule ID from the Voximplant API
+- Starts the scenario with `SCRIPT_CUSTOM_DATA` from `.env`
+- The scenario calls `VoxEngine.callPSTN()` to dial the destination number
+- After the callee answers, a Grok Voice Agent is attached
 
-```bash
-curl -X POST "https://api.voximplant.com/platform_api/StartScenarios" \
-  -d "account_name=YOUR_ACCOUNT_NAME" \
-  -d "application_id=YOUR_APP_ID" \
-  -d "api_key=YOUR_API_KEY" \
-  -d "rule_id=YOUR_OUTBOUND_RULE_ID" \
-  -d 'script_custom_data={"clientNum":"+12345678901"}'
-```
+**Expected behavior:**
+- An outbound call is placed from your virtual number to the client's number
+- A Grok Voice Agent is created and the conversation begins
+- The dialogue continues until hangup or the `hangup_call` function
 
-3. **Expected behavior:**
-   - The script **automatically fetches the `ruleId`** for the outbound rule.
-   - `scriptCustomData` (e.g., client phone number) is passed to the scenario.
-   - The call is placed from your **rented Voximplant number** to the client’s number.
-   - A **Grok Voice Agent** is created and attached to the call.
-   - Audio is transmitted in **real time** between the caller and Grok.
-   - The dialogue continues until the call ends or the LLM triggers `hangup_call`.
-
-4. **Verify logs and results:**
-   - Check **Call History** in the Voximplant control panel.
-   - Review scenario logs via `Logger.write` for step-by-step execution.
 ---
-
-### Verification
-
-For both inbound and outbound calls:
-
-- Check **Call History** in Voximplant.
-- Review scenario logs (`Logger.write`).
-- Ensure the Grok WebSocket connection is properly closed after the call ends.
-
-> 💡 Tip: Always test with both inbound and outbound calls to verify **end-to-end voice interaction** with the Grok Voice Agent.
-
-## Next Steps
-
-Once this sample is running, you can explore broader Voximplant capabilities such as:
-
-- **Voice AI orchestration** — a serverless runtime for speech-to-speech, speech-to-text, and text-to-speech pipelines with code-driven control. Mix and match speech/LLM components, use wideband audio for higher fidelity, and scale globally on a distributed network.
-- **SIP connectivity** — deep SIP support with trunking and registration interoperability for carriers, PBXs, and SBCs, so your agent can plug into existing telecom environments.
-- **WhatsApp calling** — support for the WhatsApp Business Calling API to place and receive calls inside WhatsApp for multi-channel voice experiences.
-- **SDKs** — run the same agent across phone numbers, SIP, native mobile apps, WebRTC, and WhatsApp without changing your call logic.
-
-Learn more about Voximplant and Voice AI on: [voximplant.ai](https://voximplant.ai)
 
 ## Troubleshooting
 
-### Common Issues
+### Call rings but is not answered
+- The phone number is a sandbox number — use a test number with extension (see [Testing Inbound Calls](#testing-inbound-calls-sandbox))
+- The application is not bound to the phone number
 
-**Issue: Calls not connecting**
-- Verify your phone number is properly configured.
-- Check that your application is attached to the phone number.
-- Ensure your account has sufficient balance.
+### WebSocket closes with error 1011
+- **xAI API key** does not have Voice Agent API access or has insufficient balance
+- Check your xAI account at [console.x.ai](https://console.x.ai)
+- Try the model `grok-voice-latest`
 
-**Issue: Grok API errors**
-- Verify your API key is correct.
-- Check API rate limits.
-- Review API endpoint URLs.
+### Deployment fails with "Cannot add application"
+- Check that `VOX_ACCOUNT_NAME` matches your Voximplant account name
+- Delete the `voxengine_ci_source_files/` directory and retry
+
+### Logs show "Module not found"
+- The Grok module (`Modules.Grok`) is available by default on the Voximplant platform
+- If missing, contact Voximplant support to enable it for your account
+
+### Viewing logs
+- Go to **Call History** in the Voximplant control panel
+- Open a call session to see all `Logger.write` messages
+- Check for WebSocket close codes and error messages
 
 ---
 
-## Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository.
-2. Create a feature branch:
-
-```bash
-git checkout -b feature/amazing-feature
-```
-3. Commit your changes:
-```bash
-git commit -m 'Add amazing feature'
-```
-4. Push to your branch
-```bash
-git push origin feature/amazing-feature
-```
-5. Open a Merge Request (Pull Request) for review.
-
 ## License
 
-This project is licensed under the **MIT License**.  
+This project is licensed under the **MIT License**.
 See the [LICENSE](LICENSE) file for full details.
