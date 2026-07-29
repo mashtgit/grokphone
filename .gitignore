@@ -16,5 +16,8 @@ voxengine_ci_source_files/
 .agents/
 graphify-out/
 
-# VoxHub frontend (separate repo)
-frontend/
+# VoxHub frontend
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
+frontend/.open-next/
