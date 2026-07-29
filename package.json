@@ -10,11 +10,14 @@
   },
   "private": true,
   "dependencies": {
+    "@hono/node-server": "^1.13.0",
     "@voximplant/apiclient-nodejs": "^4.5.0",
     "@voximplant/voxengine-ci": "^30.0.0",
-    "hono": "^4.7.0",
-    "@hono/node-server": "^1.13.0",
     "dotenv": "^16.4.0",
+    "hono": "^4.7.0",
     "postgres": "^3.4.0"
+  },
+  "devDependencies": {
+    "eslint": "^10.8.0"
   }
 }

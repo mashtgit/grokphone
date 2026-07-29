@@ -126,19 +126,13 @@ console.log(`Generated: credentials.voxengine.js (from .env X_API_KEY)`);
 
 // agent_config.voxengine.js
 const voxNum = VOX_PHONE_NUMBER || 'YOUR_RENTED_PHONE_NUMBER';
-const agentConfigContent = [
-    `const voxNum = '${voxNum.replace(/'/g, "\\'")}';`,
-    `const GROK_MODEL = '${GROK_MODEL.replace(/'/g, "\\'")}';`,
-    'const SYSTEM_INSTRUCTIONS = `' + (SYSTEM_INSTRUCTIONS || '') + '`;',
-].join('\n');
-// Actually let me use template literal properly
 const safeInstructions = (SYSTEM_INSTRUCTIONS || '').replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
-const agentConfigContentFinal = `const voxNum = '${voxNum.replace(/'/g, "\\'")}';
+const agentConfigContent = `const voxNum = '${voxNum.replace(/'/g, "\\'")}';
 // Temporary explicit model until xAI changes the Voice Agent API default on May 31, 2026.
 const GROK_MODEL = '${GROK_MODEL.replace(/'/g, "\\'")}';
 const SYSTEM_INSTRUCTIONS = \`${safeInstructions}\`;`;
 
-fs.writeFileSync(path.join(ciScenariosDir, 'agent_config.voxengine.js'), agentConfigContentFinal);
+fs.writeFileSync(path.join(ciScenariosDir, 'agent_config.voxengine.js'), agentConfigContent);
 console.log(`Generated: agent_config.voxengine.js (from .env)`);
 
 // Copy remaining modules (grok_integration.voxengine.js) — skip the two we just generated

@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx eslint backend/src/
+
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: |
+          echo "=== Node.js files ==="
+          node --check deploy.js
+          node --check outbound.js
+          node --check backend/src/index.js
+          node --check backend/src/app.js
+          node --check backend/src/routes/index.js
+          node --check backend/src/db/index.js
+      - run: |
+          echo "=== VoxEngine files (syntax only) ==="
+          node --check scenarios/inbound_handler.voxengine.js
+          node --check scenarios/outbound_handler.voxengine.js
+          node --check modules/grok_integration.voxengine.js
+
+  # ponytail: placeholder until real tests exist
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm test
