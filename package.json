@@ -7,7 +7,7 @@
     "start": "node backend/src/index.js",
     "dev": "node --watch backend/src/index.js",
     "deploy:vox": "node deploy.js",
-    "build": "cd frontend && npm ci && npx opennextjs-cloudflare build"
+    "build": "cd frontend && npm ci && npx opennextjs-cloudflare build && node -e \"require('fs').copyFileSync('.open-next/worker.js', '.open-next/_worker.js')\""
   },
   "private": true,
   "dependencies": {
