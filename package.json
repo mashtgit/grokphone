@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node backend/src/index.js",
     "dev": "node --watch backend/src/index.js",
-    "deploy:vox": "node deploy.js"
+    "deploy:vox": "node deploy.js",
+    "build": "cd frontend && npm ci && npm run build"
   },
   "private": true,
   "dependencies": {

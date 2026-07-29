@@ -11,6 +11,7 @@
     "deploy:cf": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
   "dependencies": {
+    "@opennextjs/cloudflare": "^1.20.2",
     "next": "16.2.12",
     "react": "19.2.4",
     "react-dom": "19.2.4"
