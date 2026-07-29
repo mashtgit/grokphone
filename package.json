@@ -1,14 +1,20 @@
 {
-  "name": "Grok-phone-agent",
+  "name": "voxhub",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "VoxHub — AI call center platform",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node backend/src/index.js",
+    "dev": "node --watch backend/src/index.js",
+    "deploy:vox": "node deploy.js"
   },
   "private": true,
   "dependencies": {
     "@voximplant/apiclient-nodejs": "^4.5.0",
-    "@voximplant/voxengine-ci": "^30.0.0"
+    "@voximplant/voxengine-ci": "^30.0.0",
+    "hono": "^4.7.0",
+    "@hono/node-server": "^1.13.0",
+    "dotenv": "^16.4.0",
+    "postgres": "^3.4.0"
   }
 }

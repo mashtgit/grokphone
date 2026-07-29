@@ -1,8 +1,20 @@
-node_modules
+# Dependencies
+node_modules/
+
+# Secrets
 .env
 /modules/credentials.voxengine.js
 /modules/agent_config.voxengine.js
-voxengine_ci_source_files
 voximplant-credentials.json
 *_private.json
-graphify-out/cost.json
+
+# Build / CI artifacts
+voxengine_ci_source_files/
+
+# Local dev config
+.opencode/
+.agents/
+graphify-out/
+
+# VoxHub frontend (separate repo)
+frontend/

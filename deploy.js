@@ -1,8 +1,8 @@
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
-const VoximplantApiClient = require('@voximplant/apiclient-nodejs').default;
-require('dotenv').config();
+import fs from 'fs';
+import path from 'path';
+import { execSync } from 'child_process';
+import VoximplantApiClient from '@voximplant/apiclient-nodejs';
+import 'dotenv/config';
 
 // Normalize env values to avoid inline comment leakage from .env
 const cleanEnvValue = (value) =>

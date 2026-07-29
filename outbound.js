@@ -1,5 +1,5 @@
-const VoximplantApiClient = require('@voximplant/apiclient-nodejs').default;
-require('dotenv').config();
+import VoximplantApiClient from '@voximplant/apiclient-nodejs';
+import 'dotenv/config';
 
 // Normalize env values to avoid inline comment leakage from .env
 const cleanEnvValue = (value) =>
