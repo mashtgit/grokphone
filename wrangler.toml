@@ -1,5 +1,0 @@
-name = "voxhub-frontend"
-compatibility_date = "2026-07-29"
-compatibility_flags = ["nodejs_compat"]
-
-pages_build_output_dir = "frontend/.open-next"
