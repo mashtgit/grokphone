@@ -6,7 +6,14 @@ import { routes } from './routes/index.js';
 const app = new Hono();
 
 app.use('*', logger());
-app.use('*', cors());
+app.use('*', cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true,
+}));
+app.use('/api/auth/*', async (c, next) => {
+  c.res.headers.set('Vary', 'Origin');
+  await next();
+});
 
 app.route('/', routes);
 

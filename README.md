@@ -3,8 +3,8 @@
 VoxHub is a multi-tenant SaaS platform for AI-powered voice agents, built on **Voximplant** + **Grok Voice Agent API** + **Node.js**.
 
 - **VoxEngine scenarios** — inbound/outbound calls with Grok Voice Agent on Voximplant
-- **Backend API** (Hono.js) — tenant management, agent config, call control — on **Railway**
-- **Frontend** (Next.js) — client dashboard — on **Cloudflare Pages**
+- **Backend API** (Hono.js, Postgres) — auth, user management, agent config — on **Railway**
+- **Frontend** (Next.js 16, Tailwind v4) — landing, dashboard, auth — on **Cloudflare Workers**
 
 ---
 
@@ -51,6 +51,7 @@ Before you begin, ensure you have:
 - Grok API key with Voice Agent access (from [x.ai](https://x.ai))
 - Node.js 18+ installed
 - [Railway](https://railway.app) account (for backend API)
+- [Cloudflare](https://cloudflare.com) account (for frontend Workers deployment)
 
 ---
 
@@ -94,6 +95,8 @@ npm install
 | `npm start` | Start Hono API server (Railway) |
 | `npm run dev` | Dev mode with hot-reload |
 | `npm run deploy:vox` | Deploy VoxEngine code to Voximplant |
+| `cd frontend && npm run dev` | Start Next.js dev server |
+| `cd frontend && npm run deploy:cf` | Build + deploy frontend to Cloudflare Workers |
 
 ---
 
@@ -124,6 +127,13 @@ SCRIPT_CUSTOM_DATA={"clientNum":"+12345678901"}
 X_API_KEY=your_xai_api_key_here
 GROK_MODEL=grok-voice-latest
 SYSTEM_INSTRUCTIONS="You are a useful virtual assistant..."
+
+# Backend API (Railway)
+DATABASE_URL=postgres://user:pass@localhost:5432/voxhub
+JWT_SECRET=your-jwt-secret-min-32-chars
+FRONTEND_URL=http://localhost:3000
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
 ```
 
 | Variable | Description |
@@ -137,6 +147,11 @@ SYSTEM_INSTRUCTIONS="You are a useful virtual assistant..."
 | `X_API_KEY` | Your xAI API key (must have Voice Agent API access) |
 | `GROK_MODEL` | Grok voice model: `grok-voice-latest` (recommended) or a pinned version |
 | `SYSTEM_INSTRUCTIONS` | System prompt for the Grok voice agent |
+| `DATABASE_URL` | PostgreSQL connection string (Railway provisioned) |
+| `JWT_SECRET` | Secret for JWT sign/verify (min 32 chars) |
+| `FRONTEND_URL` | Allowed CORS origin + Google OAuth redirect target |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
 
 > The `application.config.json` uses `{{VARS}}` placeholders that are automatically substituted from `.env` during deployment.
 
@@ -154,27 +169,58 @@ Place your Voximplant service account JSON file in the project root (e.g., `voxi
 grok-phone-agent/
 ├── backend/                              # ⬅ Hono API server (deployed on Railway)
 │   └── src/
-│       ├── index.js                      # Entry point (npm start / npm run dev)
-│       ├── app.js                        # Hono app, middleware, routes
-│       ├── routes/index.js               # Health check, API endpoints
-│       └── db/index.js                   # Postgres connection
+│       ├── index.js                      # Entry point — starts Hono HTTP server
+│       ├── app.js                        # Hono app — CORS, logger, routes
+│       ├── routes/
+│       │   ├── index.js                  # Route aggregator (/, /health, /api/auth)
+│       │   ├── auth.js                   # POST /register, /login, /logout, GET /me
+│       │   └── oauth.js                  # GET /google, /google/callback
+│       ├── middleware/
+│       │   ├── auth.js                   # JWT cookie reader — sets userId on context
+│       │   └── requireAuth.js            # Guard — 401 if no auth
+│       ├── lib/
+│       │   └── jwt.js                    # signToken/verifyToken helpers
+│       └── db/
+│           ├── index.js                  # Postgres connection singleton (getDb)
+│           └── migrate.js                # Schema migration — creates users table
 │
-├── scenarios/                            # VoxEngine call handlers (deployed to Voximplant)
-│   ├── inbound_handler.voxengine.js      # Incoming call handler
-│   └── outbound_handler.voxengine.js     # Outgoing call handler
+├── frontend/                             # ⬅ Next.js 16 app (deployed on Cloudflare Workers)
+│   └── src/
+│       ├── app/
+│       │   ├── layout.tsx               # Root layout — Navbar, Footer, AuthProvider
+│       │   ├── page.tsx                  # Landing page (5 sections)
+│       │   ├── globals.css               # Tailwind v4 theme + design tokens
+│       │   ├── login/page.tsx            # Login form — email/password + Google OAuth
+│       │   ├── register/page.tsx         # Registration form
+│       │   ├── dashboard/
+│       │   │   ├── page.tsx              # Dashboard — profile, stats, quick links
+│       │   │   └── ProfileCard.tsx       # User profile card
+│       │   └── solutions/page.tsx        # Solutions overview
+│       ├── components/
+│       │   ├── Navbar.tsx                # Sticky, responsive, auth-aware
+│       │   ├── Footer.tsx                # Footer with Voximplant/xAI links
+│       │   └── ClientLayout.tsx          # "use client" — AuthProvider boundary
+│       └── lib/
+│           ├── api.ts                    # Typed fetch wrapper (credentials: "include")
+│           └── auth.tsx                  # AuthContext — user state, auth methods
 │
-├── modules/                              # Grok integration modules
+├── scenarios/                            # VoxEngine call handlers (Voximplant)
+│   ├── inbound_handler.voxengine.js      # Incoming call → Grok Voice Agent
+│   └── outbound_handler.voxengine.js     # Outbound call → Grok Voice Agent
+│
+├── modules/                              # Grok integration (runtime-only, Voximplant platform)
 │   ├── credentials.voxengine.js          # Generated from .env at deploy (gitignored)
 │   ├── agent_config.voxengine.js         # Generated from .env at deploy (gitignored)
-│   └── grok_integration.voxengine.js     # Grok Voice Agent API (WebSocket, events)
+│   └── grok_integration.voxengine.js     # WebSocket with Grok, audio routing, tool calls
 │
 ├── application/                          # Voximplant app config templates
-│   ├── application.config.json           # {{VAR}} placeholders
-│   └── rules.config.json                 # Routing rules (inbound + outbound)
+│   ├── application.config.json           # {{VAR}} placeholders substituted by deploy.js
+│   └── rules.config.json                 # Routing: inboundCalls (.*), outboundCalls (outbound)
 │
 ├── deploy.js                             # Deploy VoxEngine code to Voximplant CI
-├── outbound.js                           # Trigger outbound call via Management API
-├── railway.json                          # Railway deployment config
+├── outbound.js                           # Trigger outbound call via Voximplant API
+├── railway.json                          # Railway deployment config (Nixpacks)
+├── package.json                          # Monorepo root — Voximplant deps + backend
 ├── .env.example
 └── .gitignore
 ```
@@ -183,18 +229,26 @@ grok-phone-agent/
 
 | File | Purpose |
 |---|---|---|
-| `backend/src/index.js` | Hono API server entry point (Railway) |
-| `backend/src/app.js` | Hono app setup, middleware, route registration |
-| `backend/src/routes/index.js` | Health check + API routes |
-| `backend/src/db/index.js` | Postgres connection via `postgres.js` |
+| `backend/src/index.js` | Hono API server entry point |
+| `backend/src/app.js` | Hono app — CORS (FRONTEND_URL), logger, route registration |
+| `backend/src/routes/auth.js` | User registration, login, logout, session check |
+| `backend/src/routes/oauth.js` | Google OAuth redirect + callback (token exchange, upsert) |
+| `backend/src/middleware/auth.js` | Reads `voxhub_token` cookie, verifies JWT, sets context |
+| `backend/src/lib/jwt.js` | JWT sign/verify with HS256, cookie config |
+| `backend/src/db/index.js` | Postgres singleton via `postgres.js` |
+| `backend/src/db/migrate.js` | Creates `users` table (UUID PK, email, password_hash, google_id, avatar_url) |
+| `frontend/src/components/Navbar.tsx` | Auth-aware navbar — Login/Signup or Dashboard/Logout |
+| `frontend/src/lib/auth.tsx` | AuthContext — user state, login/register/logout/google methods |
+| `frontend/src/lib/api.ts` | Typed fetch wrapper with `credentials: "include"` |
 | `scenarios/inbound_handler.voxengine.js` | Handles incoming calls and connects to Grok |
 | `scenarios/outbound_handler.voxengine.js` | Makes outbound calls and attaches Grok after connection |
 | `modules/grok_integration.voxengine.js` | WebSocket communication with Grok, audio routing, tool calls |
 | `application/rules.config.json` | Defines `inboundCalls` (pattern `.*`) and `outboundCalls` (pattern `outbound`) rules |
-| `deploy.js` | Reads `.env`, generates config files, runs Voxengine CI to upload everything |
+| `deploy.js` | Reads `.env`, generates configs, runs Voxengine CI to upload everything |
 | `outbound.js` | Starts an outbound call via the Voximplant Management API |
+| `railway.json` | Railway build/deploy config (Nixpacks, npm start) |
 
-**How config generation works:** `deploy.js` reads `.env`, generates `credentials.voxengine.js` and `agent_config.voxengine.js` with your actual values, then uploads them together with the static scenarios.
+**Config generation:** `deploy.js` reads `.env`, generates `credentials.voxengine.js` + `agent_config.voxengine.js` with actual values, then uploads together with static scenarios.
 
 ---
 
@@ -218,16 +272,39 @@ This runs `deploy.js` which:
 Auto-deployed from GitHub — push to `main` triggers a deploy:
 
 - **URL**: `https://grokphone-production.up.railway.app`
-- **Health check**: `GET /health`
+- **Endpoints**: `GET /health`, `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`, `GET /api/auth/google`, `GET /api/auth/google/callback`
 
 ```bash
+# Manual deploy
+cd backend && railway up --service grokphone
+
+# Or auto-deploy from GitHub
 git push origin main        # → Railway auto-deploys
 ```
 
-### Frontend (Cloudflare Pages)
+**Required Railway variables:** `DATABASE_URL`, `JWT_SECRET`, `FRONTEND_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
+
+### Frontend (Cloudflare Workers)
+
+Deployed via `@opennextjs/cloudflare` — builds Next.js for the Workers runtime:
 
 ```bash
 cd frontend && npm run deploy:cf
+# Which runs: opennextjs-cloudflare build && opennextjs-cloudflare deploy
+```
+
+- **URL**: `https://voxhub-frontend.mashtmsc.workers.dev`
+- **Startup time**: ~28ms
+- **Config**: `frontend/wrangler.toml` — `nodejs_compat`, `NEXT_PUBLIC_API_URL` as env var
+
+Requires `NEXT_PUBLIC_API_URL` to be set (in `wrangler.toml [vars]` or `.env.local`).
+
+```bash
+# Local preview after build
+cd frontend && npx wrangler dev
+
+# Rollback
+npx wrangler rollback
 ```
 
 ---

@@ -6,8 +6,7 @@ export function getDb() {
   if (!sql) {
     const connectionString = process.env.DATABASE_URL;
     if (!connectionString) {
-      // ponytail: no DB env = return null, caller handles. Add check on startup when production.
-      return null;
+      throw new Error('DATABASE_URL is not set');
     }
     sql = postgres(connectionString);
   }

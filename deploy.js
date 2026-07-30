@@ -17,19 +17,12 @@ const X_API_KEY = cleanEnvValue(process.env.X_API_KEY);
 const GROK_MODEL = cleanEnvValue(process.env.GROK_MODEL) || 'grok-voice-think-fast-1.0';
 const SYSTEM_INSTRUCTIONS = cleanEnvValue(process.env.SYSTEM_INSTRUCTIONS);
 
-const setCleanEnv = (key, value) => {
-    if (typeof value === 'undefined') {
-        delete process.env[key];
-        return;
-    }
-    process.env[key] = value;
-};
-
-setCleanEnv('VOX_CI_CREDENTIALS', VOX_CI_CREDENTIALS);
-setCleanEnv('VOX_CI_ROOT_PATH', VOX_CI_ROOT_PATH);
-setCleanEnv('VOX_ACCOUNT_NAME', VOX_ACCOUNT_NAME);
-setCleanEnv('VOX_NEW_APP_NAME', VOX_NEW_APP_NAME);
-setCleanEnv('VOX_PHONE_NUMBER', VOX_PHONE_NUMBER);
+// Push cleaned values back to process.env for {{VAR}} template substitution
+process.env.VOX_CI_CREDENTIALS = VOX_CI_CREDENTIALS;
+process.env.VOX_CI_ROOT_PATH = VOX_CI_ROOT_PATH;
+process.env.VOX_ACCOUNT_NAME = VOX_ACCOUNT_NAME;
+process.env.VOX_NEW_APP_NAME = VOX_NEW_APP_NAME;
+process.env.VOX_PHONE_NUMBER = VOX_PHONE_NUMBER;
 
 // ---------------------------
 // Check required environment variables
@@ -55,18 +48,6 @@ const sourceVoiceAIDir = path.join(projectRoot, 'modules');
 // ---------------------------
 if (!fs.existsSync(ciRootDir)) fs.mkdirSync(ciRootDir, { recursive: true });
 console.log(`CI root folder ready: ${ciRootDir}`);
-
-// ---------------------------
-// Install Voximplant CI package
-// ---------------------------
-console.log('Installing @voximplant/voxengine-ci');
-try {
-    execSync('npm install @voximplant/voxengine-ci', { stdio: 'inherit' });
-    console.log('Voximplant CI package installed');
-} catch (err) {
-    console.error('Failed to install Voximplant CI:', err);
-    process.exit(1);
-}
 
 // ---------------------------
 // Initialize CI

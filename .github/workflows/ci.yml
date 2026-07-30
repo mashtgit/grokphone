@@ -41,18 +41,6 @@ jobs:
           node --check scenarios/outbound_handler.voxengine.js
           node --check modules/grok_integration.voxengine.js
 
-  # ponytail: placeholder until real tests exist
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - run: npm ci
-      - run: echo "No tests yet — ok" && exit 0
-
   deploy-frontend:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest

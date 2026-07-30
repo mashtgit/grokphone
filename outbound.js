@@ -9,18 +9,6 @@ const VOX_CI_CREDENTIALS = cleanEnvValue(process.env.VOX_CI_CREDENTIALS);
 const VOX_NEW_APP_NAME = cleanEnvValue(process.env.VOX_NEW_APP_NAME);
 const SCRIPT_CUSTOM_DATA = cleanEnvValue(process.env.SCRIPT_CUSTOM_DATA);
 
-const setCleanEnv = (key, value) => {
-    if (typeof value === 'undefined') {
-        delete process.env[key];
-        return;
-    }
-    process.env[key] = value;
-};
-
-setCleanEnv('VOX_CI_CREDENTIALS', VOX_CI_CREDENTIALS);
-setCleanEnv('VOX_NEW_APP_NAME', VOX_NEW_APP_NAME);
-setCleanEnv('SCRIPT_CUSTOM_DATA', SCRIPT_CUSTOM_DATA);
-
 if (!VOX_CI_CREDENTIALS || !VOX_NEW_APP_NAME || !SCRIPT_CUSTOM_DATA) {
     console.error('Credentials in .env is not set');
     process.exit(1);

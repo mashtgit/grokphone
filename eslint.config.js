@@ -15,13 +15,7 @@ export default [
         clearTimeout: 'readonly',
         __dirname: 'readonly',
         __filename: 'readonly',
-        // Voximplant runtime (for .voxengine.js files — checked separately)
-        VoxEngine: 'readonly',
-        Logger: 'readonly',
-        Modules: 'readonly',
-        CallEvents: 'readonly',
-        Net: 'readonly',
-        Media: 'readonly',
+        // Voximplant runtime globals reserved for future .voxengine.js linting
       },
     },
     rules: {
